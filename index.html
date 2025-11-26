@@ -232,7 +232,7 @@
     .table-wrapper {
       border-radius: 11px;
       border: 1px solid #e5e7eb;
-      overflow: hidden;
+      overflow-x: auto;        /* allow horizontal scroll on narrow screens */
       background: #f9fafb;
     }
 
@@ -240,6 +240,7 @@
       width: 100%;
       border-collapse: collapse;
       font-size: 0.78rem;
+      min-width: 650px;        /* avoid columns becoming microscopic */
     }
 
     th, td {
@@ -394,6 +395,48 @@
       text-align: right;
       font-size: 0.7rem;
       color: #6b7280;
+    }
+
+    /* ===== Mobile tweaks ===== */
+    @media (max-width: 680px) {
+      body {
+        padding: 0.9rem 0.4rem 1.4rem;
+      }
+      .app-shell {
+        padding: 0.85rem 0.85rem 1rem;
+        border-radius: 0.9rem;
+      }
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .logo-wrap {
+        width: 82px;
+        height: 82px;
+        box-shadow: 0 0 0 2px #fef3c7, 0 10px 20px rgba(0,45,92,0.25);
+      }
+      .logo-wrap img {
+        max-width: 70px;
+        max-height: 70px;
+      }
+      .title-block h1 {
+        font-size: 1.1rem;
+      }
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .btn-row {
+        flex-direction: column-reverse;
+        align-items: stretch;
+      }
+      .btn-primary,
+      .btn-secondary {
+        width: 100%;
+        justify-content: center;
+      }
+      .chip-row {
+        align-items: flex-start;
+      }
     }
   </style>
 </head>
@@ -1084,7 +1127,7 @@
       // ==== BREAKDOWN TABLE (under results, scrollable horizontally) ====
       const breakdownContainer = document.getElementById("breakdownTableContainer");
       let tableHtml = `
-        <div class="table-wrapper" style="margin-top:0.3rem; overflow-x:auto;">
+        <div class="table-wrapper" style="margin-top:0.3rem;">
           <table style="min-width: 900px;">
             <thead>
               <tr>
@@ -1149,3 +1192,4 @@
   </script>
 </body>
 </html>
+
