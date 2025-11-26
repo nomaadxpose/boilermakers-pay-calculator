@@ -234,6 +234,19 @@
       border: 1px solid #e5e7eb;
       overflow-x: auto;        /* allow horizontal scroll on narrow screens */
       background: #f9fafb;
+      position: relative;
+    }
+
+    /* subtle fade on right edge to hint scroll */
+    .table-wrapper::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 22px;
+      height: 100%;
+      pointer-events: none;
+      background: linear-gradient(to left, rgba(243,244,246,1), rgba(243,244,246,0));
     }
 
     table {
@@ -273,6 +286,13 @@
 
     tbody tr:nth-child(even) {
       background: #f9fafb;
+    }
+
+    .scroll-hint {
+      margin-top: 0.2rem;
+      font-size: 0.7rem;
+      color: #6b7280;
+      text-align: right;
     }
 
     .btn-row {
@@ -707,6 +727,7 @@
             </tbody>
           </table>
         </div>
+        <div class="scroll-hint">Swipe sideways to see all columns →</div>
 
         <h2 style="margin-top:0.9rem;"><span class="step-pill">3</span> LOA</h2>
         <div class="grid">
@@ -1169,6 +1190,7 @@
             </tbody>
           </table>
         </div>
+        <div class="scroll-hint">Swipe sideways to see full breakdown →</div>
       `;
       breakdownContainer.innerHTML = tableHtml;
 
@@ -1189,7 +1211,29 @@
       document.getElementById("resultsCard").style.display = "none";
       document.getElementById("emptyState").style.display = "block";
     });
+
+    // Auto-clear hours inputs when they have 0, restore 0 if left empty
+    const hourInputIds = [
+      "monHours","tueHours","wedHours",
+      "thuHours","friHours","satHours","sunHours"
+    ];
+    hourInputIds.forEach(id => {
+      const input = document.getElementById(id);
+      if (!input) return;
+
+      input.addEventListener("focus", () => {
+        const v = input.value.trim();
+        if (v === "0" || v === "0.0" || v === "0.00") {
+          input.value = "";
+        }
+      });
+
+      input.addEventListener("blur", () => {
+        if (input.value.trim() === "") {
+          input.value = "0";
+        }
+      });
+    });
   </script>
 </body>
 </html>
-
