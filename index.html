@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<link rel="icon" type="image/png" href="favicon.png">
+<head>
   <meta charset="UTF-8">
   <title>Boilermaker 146 Paycheck Estimator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -40,14 +40,14 @@
 
     .app-shell {
       width: 100%;
-      max-width: 1220px;               /* wider overall */
+      max-width: 1220px;
       background: linear-gradient(145deg, #ffffff, #f9fafb);
       border-radius: 18px;
       border: 1px solid var(--border-subtle);
       box-shadow:
         0 24px 60px rgba(15,23,42,0.18),
         0 0 0 1px rgba(15,23,42,0.06);
-      padding: 1.3rem 2rem 1.4rem;      /* more breathing room */
+      padding: 1.3rem 2rem 1.4rem;
     }
 
     header {
@@ -63,11 +63,11 @@
     .logo-title {
       display: flex;
       align-items: center;
-      gap: 1.3rem;                      /* more space between logo and text */
+      gap: 1.3rem;
     }
 
     .logo-wrap {
-      width: 110px;                     /* bigger circle */
+      width: 110px;
       height: 110px;
       border-radius: 999px;
       background: #ffffff;
@@ -78,7 +78,7 @@
     }
 
     .logo-wrap img {
-      max-width: 92px;                  /* bigger logo inside */
+      max-width: 92px;
       max-height: 92px;
       border-radius: 999px;
       display: block;
@@ -141,7 +141,7 @@
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.3fr);  /* bigger results card */
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.3fr);
       gap: 1rem;
       margin-top: 0.75rem;
     }
@@ -232,12 +232,11 @@
     .table-wrapper {
       border-radius: 11px;
       border: 1px solid #e5e7eb;
-      overflow-x: auto;        /* allow horizontal scroll on narrow screens */
+      overflow-x: auto;
       background: #f9fafb;
       position: relative;
     }
 
-    /* subtle fade on right edge to hint scroll */
     .table-wrapper::after {
       content: "";
       position: absolute;
@@ -253,7 +252,7 @@
       width: 100%;
       border-collapse: collapse;
       font-size: 0.78rem;
-      min-width: 650px;        /* avoid columns becoming microscopic */
+      min-width: 650px;
     }
 
     th, td {
@@ -417,7 +416,6 @@
       color: #6b7280;
     }
 
-    /* ===== Mobile tweaks ===== */
     @media (max-width: 680px) {
       body {
         padding: 0.9rem 0.4rem 1.4rem;
@@ -465,7 +463,6 @@
     <header>
       <div class="logo-title">
         <div class="logo-wrap">
-          <!-- Make sure this file is in the same folder as this HTML -->
           <img src="boilermakers-logo.png" alt="Boilermakers logo">
         </div>
         <div class="title-block">
@@ -487,7 +484,7 @@
     </header>
 
     <div class="layout">
-      <!-- LEFT: INPUTS (FORM) -->
+      <!-- LEFT: INPUTS -->
       <form id="payForm" class="card">
         <h2><span class="step-pill">1</span> Base info</h2>
         <div class="grid">
@@ -501,7 +498,7 @@
           </div>
         </div>
 
-        <h2 style="margin-top:0.85rem;"><span class="step-pill">2</span> Week schedule</h2>
+        <h2 style="margin-top:0.85rem;"><span class="step-pill">2</span> Week schedule (Sun–Sat)</h2>
         <p class="hint">
           One row per day. If “Night shift” is checked, all <strong>worked</strong> hours that day earn the night premium
           (the extra 0.5h break bonus does <strong>not</strong>). If “Holiday” is checked, all hours that day are paid at
@@ -521,6 +518,35 @@
               </tr>
             </thead>
             <tbody>
+              <!-- Sunday -->
+              <tr>
+                <td>Sun</td>
+                <td><input type="number" id="sunHours" step="0.1" min="0" value="0"></td>
+                <td>
+                  <div class="checkbox-row">
+                    <input type="checkbox" id="sunNight">
+                    <label for="sunNight">Night</label>
+                  </div>
+                </td>
+                <td>
+                  <div class="checkbox-row">
+                    <input type="checkbox" id="sunHoliday">
+                    <label for="sunHoliday">Holiday</label>
+                  </div>
+                </td>
+                <td>
+                  <div class="checkbox-row">
+                    <input type="checkbox" id="sunScheduledOT">
+                    <label for="sunScheduledOT">Yes</label>
+                  </div>
+                </td>
+                <td>
+                  <select id="sunBreak">
+                    <option value="30">30 min</option>
+                    <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
+                  </select>
+                </td>
+              </tr>
               <!-- Monday -->
               <tr>
                 <td>Mon</td>
@@ -695,35 +721,6 @@
                   </select>
                 </td>
               </tr>
-              <!-- Sunday -->
-              <tr>
-                <td>Sun</td>
-                <td><input type="number" id="sunHours" step="0.1" min="0" value="0"></td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="sunNight">
-                    <label for="sunNight">Night</label>
-                  </div>
-                </td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="sunHoliday">
-                    <label for="sunHoliday">Holiday</label>
-                  </div>
-                </td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="sunScheduledOT">
-                    <label for="sunScheduledOT">Yes</label>
-                  </div>
-                </td>
-                <td>
-                  <select id="sunBreak">
-                    <option value="30">30 min</option>
-                    <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
-                  </select>
-                </td>
-              </tr>
             </tbody>
           </table>
         </div>
@@ -819,7 +816,7 @@
           <div id="summaryResults"></div>
 
           <div class="section-label" style="margin-top:0.9rem;">
-            Day-by-day breakdown
+            Day-by-day breakdown (Sun–Sat)
           </div>
           <div id="breakdownTableContainer"></div>
         </div>
@@ -836,16 +833,14 @@
   </div>
 
   <script>
-    // Fixed contract rates
-    const VAC_RATE = 0.06;   // 6% vacation
-    const STAT_RATE = 0.04;  // 4% statutory
+    const VAC_RATE = 0.06;
+    const STAT_RATE = 0.04;
 
     function safeNumber(value) {
       const n = parseFloat(value);
       return Number.isFinite(n) ? n : 0;
     }
 
-    // OT rules: weekdays 1×/1.5×/2×, weekends & holidays all 2×
     function calculateDay(hours, hourlyRate, isWeekendOrHoliday) {
       let regularH = 0, t1_5H = 0, t2H = 0;
 
@@ -895,53 +890,53 @@
       const unionRate = safeNumber(document.getElementById("unionRate").value) / 100;
 
       const hours = {
+        Sun: safeNumber(document.getElementById("sunHours").value),
         Mon: safeNumber(document.getElementById("monHours").value),
         Tue: safeNumber(document.getElementById("tueHours").value),
         Wed: safeNumber(document.getElementById("wedHours").value),
         Thu: safeNumber(document.getElementById("thuHours").value),
         Fri: safeNumber(document.getElementById("friHours").value),
-        Sat: safeNumber(document.getElementById("satHours").value),
-        Sun: safeNumber(document.getElementById("sunHours").value)
+        Sat: safeNumber(document.getElementById("satHours").value)
       };
 
       const nightShift = {
+        Sun: document.getElementById("sunNight").checked,
         Mon: document.getElementById("monNight").checked,
         Tue: document.getElementById("tueNight").checked,
         Wed: document.getElementById("wedNight").checked,
         Thu: document.getElementById("thuNight").checked,
         Fri: document.getElementById("friNight").checked,
-        Sat: document.getElementById("satNight").checked,
-        Sun: document.getElementById("sunNight").checked
+        Sat: document.getElementById("satNight").checked
       };
 
       const holiday = {
+        Sun: document.getElementById("sunHoliday").checked,
         Mon: document.getElementById("monHoliday").checked,
         Tue: document.getElementById("tueHoliday").checked,
         Wed: document.getElementById("wedHoliday").checked,
         Thu: document.getElementById("thuHoliday").checked,
         Fri: document.getElementById("friHoliday").checked,
-        Sat: document.getElementById("satHoliday").checked,
-        Sun: document.getElementById("sunHoliday").checked
+        Sat: document.getElementById("satHoliday").checked
       };
 
       const scheduledOT = {
+        Sun: document.getElementById("sunScheduledOT").checked,
         Mon: document.getElementById("monScheduledOT").checked,
         Tue: document.getElementById("tueScheduledOT").checked,
         Wed: document.getElementById("wedScheduledOT").checked,
         Thu: document.getElementById("thuScheduledOT").checked,
         Fri: document.getElementById("friScheduledOT").checked,
-        Sat: document.getElementById("satScheduledOT").checked,
-        Sun: document.getElementById("sunScheduledOT").checked
+        Sat: document.getElementById("satScheduledOT").checked
       };
 
       const breakType = {
+        Sun: document.getElementById("sunBreak").value,
         Mon: document.getElementById("monBreak").value,
         Tue: document.getElementById("tueBreak").value,
         Wed: document.getElementById("wedBreak").value,
         Thu: document.getElementById("thuBreak").value,
         Fri: document.getElementById("friBreak").value,
-        Sat: document.getElementById("satBreak").value,
-        Sun: document.getElementById("sunBreak").value
+        Sat: document.getElementById("satBreak").value
       };
 
       let totalRegularPay = 0;
@@ -954,15 +949,15 @@
       let totalBreakBonusH = 0;
 
       const breakdownRows = [];
-      const dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      const dayOrder = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
       const dayLabels = {
+        Sun: "Sunday",
         Mon: "Monday",
         Tue: "Tuesday",
         Wed: "Wednesday",
         Thu: "Thursday",
         Fri: "Friday",
-        Sat: "Saturday",
-        Sun: "Sunday"
+        Sat: "Saturday"
       };
 
       for (const dayKey of dayOrder) {
@@ -977,7 +972,6 @@
 
         const dayResult = calculateDay(h, hourlyRate, isWeekendOrHoliday);
 
-        // Break bonus: if OT NOT scheduled, hours ≥ 12, and break is 15 min ⇒ +0.5h straight time
         let breakBonusH = 0;
         if (!scheduledOT[dayKey] && h >= 12 && breakType[dayKey] === "15") {
           breakBonusH = 0.5;
@@ -994,7 +988,6 @@
 
         totalBreakBonusH += breakBonusH;
 
-        // Night premium: if night shift, use worked hours only (no break bonus)
         let nightPaidH = 0;
         if (nightShift[dayKey]) {
           nightPaidH = h;
@@ -1018,13 +1011,11 @@
 
       const nightPremiumTotal = totalNightPaidHours * nightPremiumRate;
 
-      // Base used for vacation/stat: regular + OT + DT + night premium (no LOA, no incentive)
       const baseForVacStat =
         totalRegularPay + totalT1_5Pay + totalT2Pay + nightPremiumTotal;
       const vacationPay = baseForVacStat * VAC_RATE;
       const statPay = baseForVacStat * STAT_RATE;
 
-      // Taxable earnings (everything except LOA and non-taxable incentive)
       const taxableEarnings =
         totalRegularPay + totalT1_5Pay + totalT2Pay +
         nightPremiumTotal + vacationPay + statPay +
@@ -1034,7 +1025,6 @@
       const nonTaxIncentive = incentiveTaxable ? 0 : incentiveAmount;
       const totalGross = taxableEarnings + loaTotal + nonTaxIncentive;
 
-      // Deductions on taxable earnings
       const cpp = taxableEarnings * cppRate;
       const cpp2 = taxableEarnings * cpp2Rate;
       const ei = taxableEarnings * eiRate;
@@ -1045,7 +1035,6 @@
       const totalDeductions = cpp + cpp2 + ei + fedTax + provTax + unionDues;
       const netPay = totalGross - totalDeductions;
 
-      // ==== SUMMARY (Hours → Earnings → Deductions → Net) ====
       const summaryDiv = document.getElementById("summaryResults");
       summaryDiv.innerHTML = `
         <div class="section-label">Hours</div>
@@ -1145,7 +1134,6 @@
         </div>
       `;
 
-      // ==== BREAKDOWN TABLE (under results, scrollable horizontally) ====
       const breakdownContainer = document.getElementById("breakdownTableContainer");
       let tableHtml = `
         <div class="table-wrapper" style="margin-top:0.3rem;">
@@ -1198,12 +1186,10 @@
       document.getElementById("emptyState").style.display = "none";
     });
 
-    // Reset week button
     document.getElementById("resetBtn").addEventListener("click", function () {
       const form = document.getElementById("payForm");
-      form.reset(); // goes back to HTML default values
+      form.reset();
 
-      // Clear results and errors
       document.getElementById("summaryResults").innerHTML = "";
       document.getElementById("breakdownTableContainer").innerHTML = "";
       document.getElementById("error").textContent = "";
@@ -1212,10 +1198,10 @@
       document.getElementById("emptyState").style.display = "block";
     });
 
-    // Auto-clear hours inputs when they have 0, restore 0 if left empty
+    // Auto-clear hours inputs when focused if value is 0, restore 0 if left empty
     const hourInputIds = [
-      "monHours","tueHours","wedHours",
-      "thuHours","friHours","satHours","sunHours"
+      "sunHours","monHours","tueHours",
+      "wedHours","thuHours","friHours","satHours"
     ];
     hourInputIds.forEach(id => {
       const input = document.getElementById(id);
