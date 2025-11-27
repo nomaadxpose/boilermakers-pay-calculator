@@ -1324,4 +1324,43 @@
     });
   </script>
 </body>
+<script src="calculator.js"></script>
+<script>
+  // Example of how to integrate with your current calculate function
+  function calculatePayWrapper() {
+    // 1) You already compute these somewhere in your existing JS:
+    //    Adjust variable names to match your code!!
+    const taxableEarnings   = window.currentWeekTaxableEarnings;    // replace with your actual var
+    const nonTaxableEarnings = window.currentWeekNonTaxableEarnings; // LOA + non-taxable incentive
+
+    // 2) Read tax mode from radio buttons
+    const taxModeRadio = document.querySelector('input[name="taxMode"]:checked');
+    const taxMode = taxModeRadio ? taxModeRadio.value : "early-year";
+
+    // 3) Call CRA engine
+    const result = window.BoilerTaxEngine.calculateDeductionsForWeek(
+      taxableEarnings,
+      nonTaxableEarnings,
+      { taxMode: taxMode, unionDuesRate: 0.0375 }
+    );
+
+    // 4) Update your UI – change IDs to your real ones
+    document.getElementById("cppAmount").textContent        = result.cpp.toFixed(2);
+    document.getElementById("cpp2Amount").textContent       = result.cpp2.toFixed(2);
+    document.getElementById("eiAmount").textContent         = result.ei.toFixed(2);
+    document.getElementById("federalTaxAmount").textContent = result.federalTax.toFixed(2);
+    document.getElementById("albertaTaxAmount").textContent = result.albertaTax.toFixed(2);
+    document.getElementById("unionDuesAmount").textContent  = result.unionDues.toFixed(2);
+    document.getElementById("totalDeductions").textContent  = result.totalDeductions.toFixed(2);
+    document.getElementById("netPayAmount").textContent     = result.netPayTotal.toFixed(2);
+
+    // If you show a separate “taxable net” somewhere:
+    const netTaxableSpan = document.getElementById("netTaxableOnlyAmount");
+    if (netTaxableSpan) {
+      netTaxableSpan.textContent = result.netTaxableOnly.toFixed(2);
+    }
+  }
+</script>
+</body>
+</html>
 </html>
