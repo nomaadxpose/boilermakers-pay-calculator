@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     :root {
-      /* Brand-inspired palette (boilermakers.ca style) */
       --navy: #002d5c;
       --navy-soft: #0b2140;
       --gold: #daa819;
@@ -187,7 +186,7 @@
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
       gap: 0.6rem 1rem;
     }
 
@@ -214,6 +213,19 @@
       box-shadow: 0 0 0 1px var(--gold-soft);
     }
 
+    .small-label {
+      font-size: 0.75rem;
+      color: var(--text-soft);
+      margin-top: 0.25rem;
+      margin-bottom: 0.15rem;
+    }
+
+    .tiny-note {
+      font-size: 0.7rem;
+      color: #6b7280;
+      margin-top: 0.3rem;
+    }
+
     .checkbox-row {
       display: flex;
       align-items: center;
@@ -229,16 +241,20 @@
       accent-color: var(--gold);
     }
 
+    /* Scrollable table wrapper with fixed fade on right edge */
     .table-wrapper {
       border-radius: 11px;
       border: 1px solid #e5e7eb;
-      overflow-x: auto;
       background: #f9fafb;
       position: relative;
+      overflow: hidden;            /* keeps fade anchored to the box */
     }
 
-    .table-wrapper::after {
-      content: "";
+    .table-inner {
+      overflow-x: auto;            /* scrolling happens here */
+    }
+
+    .table-fade-right {
       position: absolute;
       top: 0;
       right: 0;
@@ -491,6 +507,27 @@
           <div>
             <label for="hourlyRate">Hourly rate ($/hr)</label>
             <input type="number" id="hourlyRate" step="0.01" min="0" required>
+            <div class="small-label">Select a rate table (optional):</div>
+            <select id="ratePresetGroup">
+              <option value="custom">Custom hourly rate</option>
+              <option value="fort">New construction &amp; Fort McMurray maintenance</option>
+              <option value="outside">Outside Fort McMurray maintenance</option>
+            </select>
+            <div id="ratePresetRoleContainer" style="margin-top:0.25rem; display:none;">
+              <div class="small-label">Classification:</div>
+              <select id="ratePresetRole">
+                <option value="">Choose classification…</option>
+                <option value="GF">GF</option>
+                <option value="Foreman">Foreman</option>
+                <option value="Journeyman">Journeyman</option>
+                <option value="App3">App3</option>
+                <option value="App2">App2</option>
+                <option value="App1">App1</option>
+              </select>
+            </div>
+            <div class="tiny-note">
+              Based on current Boilermakers 146 wage tables – confirm with your rep for changes.
+            </div>
           </div>
           <div>
             <label for="nightPremiumRate">Night shift premium ($/hr)</label>
@@ -506,223 +543,226 @@
         </p>
 
         <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 13%;">Day</th>
-                <th style="width: 18%;">Hours</th>
-                <th style="width: 18%;">Night shift</th>
-                <th style="width: 18%;">Holiday</th>
-                <th style="width: 18%;">Scheduled OT</th>
-                <th style="width: 15%;">End break</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Sunday -->
-              <tr>
-                <td>Sun</td>
-                <td><input type="number" id="sunHours" step="0.1" min="0" value="0"></td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="sunNight">
-                    <label for="sunNight">Night</label>
-                  </div>
-                </td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="sunHoliday">
-                    <label for="sunHoliday">Holiday</label>
-                  </div>
-                </td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="sunScheduledOT">
-                    <label for="sunScheduledOT">Yes</label>
-                  </div>
-                </td>
-                <td>
-                  <select id="sunBreak">
-                    <option value="30">30 min</option>
-                    <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
-                  </select>
-                </td>
-              </tr>
-              <!-- Monday -->
-              <tr>
-                <td>Mon</td>
-                <td><input type="number" id="monHours" step="0.1" min="0" value="0"></td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="monNight">
-                    <label for="monNight">Night</label>
-                  </div>
-                </td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="monHoliday">
-                    <label for="monHoliday">Holiday</label>
-                  </div>
-                </td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="monScheduledOT">
-                    <label for="monScheduledOT">Yes</label>
-                  </div>
-                </td>
-                <td>
-                  <select id="monBreak">
-                    <option value="30">30 min</option>
-                    <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
-                  </select>
-                </td>
-              </tr>
-              <!-- Tuesday -->
-              <tr>
-                <td>Tue</td>
-                <td><input type="number" id="tueHours" step="0.1" min="0" value="0"></td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="tueNight">
-                    <label for="tueNight">Night</label>
-                  </div>
-                </td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="tueHoliday">
-                    <label for="tueHoliday">Holiday</label>
-                  </div>
-                </td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="tueScheduledOT">
-                    <label for="tueScheduledOT">Yes</label>
-                  </div>
-                </td>
-                <td>
-                  <select id="tueBreak">
-                    <option value="30">30 min</option>
-                    <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
-                  </select>
-                </td>
-              </tr>
-              <!-- Wednesday -->
-              <tr>
-                <td>Wed</td>
-                <td><input type="number" id="wedHours" step="0.1" min="0" value="0"></td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="wedNight">
-                    <label for="wedNight">Night</label>
-                  </div>
-                </td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="wedHoliday">
-                    <label for="wedHoliday">Holiday</label>
-                  </div>
-                </td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="wedScheduledOT">
-                    <label for="wedScheduledOT">Yes</label>
-                  </div>
-                </td>
-                <td>
-                  <select id="wedBreak">
-                    <option value="30">30 min</option>
-                    <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
-                  </select>
-                </td>
-              </tr>
-              <!-- Thursday -->
-              <tr>
-                <td>Thu</td>
-                <td><input type="number" id="thuHours" step="0.1" min="0" value="0"></td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="thuNight">
-                    <label for="thuNight">Night</label>
-                  </div>
-                </td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="thuHoliday">
-                    <label for="thuHoliday">Holiday</label>
-                  </div>
-                </td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="thuScheduledOT">
-                    <label for="thuScheduledOT">Yes</label>
-                  </div>
-                </td>
-                <td>
-                  <select id="thuBreak">
-                    <option value="30">30 min</option>
-                    <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
-                  </select>
-                </td>
-              </tr>
-              <!-- Friday -->
-              <tr>
-                <td>Fri</td>
-                <td><input type="number" id="friHours" step="0.1" min="0" value="0"></td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="friNight">
-                    <label for="friNight">Night</label>
-                  </div>
-                </td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="friHoliday">
-                    <label for="friHoliday">Holiday</label>
-                  </div>
-                </td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="friScheduledOT">
-                    <label for="friScheduledOT">Yes</label>
-                  </div>
-                </td>
-                <td>
-                  <select id="friBreak">
-                    <option value="30">30 min</option>
-                    <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
-                  </select>
-                </td>
-              </tr>
-              <!-- Saturday -->
-              <tr>
-                <td>Sat</td>
-                <td><input type="number" id="satHours" step="0.1" min="0" value="0"></td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="satNight">
-                    <label for="satNight">Night</label>
-                  </div>
-                </td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="satHoliday">
-                    <label for="satHoliday">Holiday</label>
-                  </div>
-                </td>
-                <td>
-                  <div class="checkbox-row">
-                    <input type="checkbox" id="satScheduledOT">
-                    <label for="satScheduledOT">Yes</label>
-                  </div>
-                </td>
-                <td>
-                  <select id="satBreak">
-                    <option value="30">30 min</option>
-                    <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
-                  </select>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="table-inner">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 13%;">Day</th>
+                  <th style="width: 18%;">Hours</th>
+                  <th style="width: 18%;">Night shift</th>
+                  <th style="width: 18%;">Holiday</th>
+                  <th style="width: 18%;">Scheduled OT</th>
+                  <th style="width: 15%;">End break</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Sunday -->
+                <tr>
+                  <td>Sun</td>
+                  <td><input type="number" id="sunHours" step="0.1" min="0" value="0"></td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="sunNight">
+                      <label for="sunNight">Night</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="sunHoliday">
+                      <label for="sunHoliday">Holiday</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="sunScheduledOT">
+                      <label for="sunScheduledOT">Yes</label>
+                    </div>
+                  </td>
+                  <td>
+                    <select id="sunBreak">
+                      <option value="30">30 min</option>
+                      <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
+                    </select>
+                  </td>
+                </tr>
+                <!-- Monday -->
+                <tr>
+                  <td>Mon</td>
+                  <td><input type="number" id="monHours" step="0.1" min="0" value="0"></td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="monNight">
+                      <label for="monNight">Night</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="monHoliday">
+                      <label for="monHoliday">Holiday</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="monScheduledOT">
+                      <label for="monScheduledOT">Yes</label>
+                    </div>
+                  </td>
+                  <td>
+                    <select id="monBreak">
+                      <option value="30">30 min</option>
+                      <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
+                    </select>
+                  </td>
+                </tr>
+                <!-- Tuesday -->
+                <tr>
+                  <td>Tue</td>
+                  <td><input type="number" id="tueHours" step="0.1" min="0" value="0"></td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="tueNight">
+                      <label for="tueNight">Night</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="tueHoliday">
+                      <label for="tueHoliday">Holiday</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="tueScheduledOT">
+                      <label for="tueScheduledOT">Yes</label>
+                    </div>
+                  </td>
+                  <td>
+                    <select id="tueBreak">
+                      <option value="30">30 min</option>
+                      <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
+                    </select>
+                  </td>
+                </tr>
+                <!-- Wednesday -->
+                <tr>
+                  <td>Wed</td>
+                  <td><input type="number" id="wedHours" step="0.1" min="0" value="0"></td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="wedNight">
+                      <label for="wedNight">Night</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="wedHoliday">
+                      <label for="wedHoliday">Holiday</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="wedScheduledOT">
+                      <label for="wedScheduledOT">Yes</label>
+                    </div>
+                  </td>
+                  <td>
+                    <select id="wedBreak">
+                      <option value="30">30 min</option>
+                      <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
+                    </select>
+                  </td>
+                </tr>
+                <!-- Thursday -->
+                <tr>
+                  <td>Thu</td>
+                  <td><input type="number" id="thuHours" step="0.1" min="0" value="0"></td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="thuNight">
+                      <label for="thuNight">Night</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="thuHoliday">
+                      <label for="thuHoliday">Holiday</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="thuScheduledOT">
+                      <label for="thuScheduledOT">Yes</label>
+                    </div>
+                  </td>
+                  <td>
+                    <select id="thuBreak">
+                      <option value="30">30 min</option>
+                      <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
+                    </select>
+                  </td>
+                </tr>
+                <!-- Friday -->
+                <tr>
+                  <td>Fri</td>
+                  <td><input type="number" id="friHours" step="0.1" min="0" value="0"></td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="friNight">
+                      <label for="friNight">Night</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="friHoliday">
+                      <label for="friHoliday">Holiday</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="friScheduledOT">
+                      <label for="friScheduledOT">Yes</label>
+                    </div>
+                  </td>
+                  <td>
+                    <select id="friBreak">
+                      <option value="30">30 min</option>
+                      <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
+                    </select>
+                  </td>
+                </tr>
+                <!-- Saturday -->
+                <tr>
+                  <td>Sat</td>
+                  <td><input type="number" id="satHours" step="0.1" min="0" value="0"></td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="satNight">
+                      <label for="satNight">Night</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="satHoliday">
+                      <label for="satHoliday">Holiday</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="satScheduledOT">
+                      <label for="satScheduledOT">Yes</label>
+                    </div>
+                  </td>
+                  <td>
+                    <select id="satBreak">
+                      <option value="30">30 min</option>
+                      <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
+                    </select>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-fade-right"></div>
         </div>
         <div class="scroll-hint">Swipe sideways to see all columns →</div>
 
@@ -791,7 +831,7 @@
             </div>
             <div>
               <label for="unionRate">Union working dues %</label>
-              <input type="number" id="unionRate" step="0.01" min="0" value="3.23">
+              <input type="number" id="unionRate" step="0.01" min="0" value="3.75">
             </div>
           </div>
         </details>
@@ -835,6 +875,32 @@
   <script>
     const VAC_RATE = 0.06;
     const STAT_RATE = 0.04;
+
+    // Wage tables
+    const ratePresets = {
+      fort: {
+        label: "New construction & Fort McMurray maintenance",
+        rates: {
+          GF: 64.90,
+          Foreman: 62.90,
+          Journeyman: 56.90,
+          App3: 51.21,
+          App2: 42.68,
+          App1: 34.14
+        }
+      },
+      outside: {
+        label: "Outside Fort McMurray maintenance",
+        rates: {
+          GF: 64.15,
+          Foreman: 62.15,
+          Journeyman: 56.15,
+          App3: 50.54,
+          App2: 42.11,
+          App1: 33.69
+        }
+      }
+    };
 
     function safeNumber(value) {
       const n = parseFloat(value);
@@ -1137,23 +1203,24 @@
       const breakdownContainer = document.getElementById("breakdownTableContainer");
       let tableHtml = `
         <div class="table-wrapper" style="margin-top:0.3rem;">
-          <table style="min-width: 900px;">
-            <thead>
-              <tr>
-                <th>Day</th>
-                <th>Total hrs</th>
-                <th>Night?</th>
-                <th>Holiday?</th>
-                <th>Night paid hrs</th>
-                <th>1× hrs</th>
-                <th>1.5× hrs</th>
-                <th>2× hrs</th>
-                <th>1× pay</th>
-                <th>1.5× pay</th>
-                <th>2× pay</th>
-              </tr>
-            </thead>
-            <tbody>
+          <div class="table-inner">
+            <table style="min-width: 900px;">
+              <thead>
+                <tr>
+                  <th>Day</th>
+                  <th>Total hrs</th>
+                  <th>Night?</th>
+                  <th>Holiday?</th>
+                  <th>Night paid hrs</th>
+                  <th>1× hrs</th>
+                  <th>1.5× hrs</th>
+                  <th>2× hrs</th>
+                  <th>1× pay</th>
+                  <th>1.5× pay</th>
+                  <th>2× pay</th>
+                </tr>
+              </thead>
+              <tbody>
       `;
       breakdownRows.forEach(row => {
         const nightText = row.night ? "Yes" : "No";
@@ -1175,8 +1242,10 @@
         `;
       });
       tableHtml += `
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-fade-right"></div>
         </div>
         <div class="scroll-hint">Swipe sideways to see full breakdown →</div>
       `;
@@ -1189,6 +1258,13 @@
     document.getElementById("resetBtn").addEventListener("click", function () {
       const form = document.getElementById("payForm");
       form.reset();
+
+      // Reset preset selector & hide classification
+      document.getElementById("ratePresetGroup").value = "custom";
+      const roleContainer = document.getElementById("ratePresetRoleContainer");
+      const roleSelect = document.getElementById("ratePresetRole");
+      roleSelect.value = "";
+      roleContainer.style.display = "none";
 
       document.getElementById("summaryResults").innerHTML = "";
       document.getElementById("breakdownTableContainer").innerHTML = "";
@@ -1219,6 +1295,32 @@
           input.value = "0";
         }
       });
+    });
+
+    // Handle rate presets
+    const hourlyRateInput = document.getElementById("hourlyRate");
+    const ratePresetGroup = document.getElementById("ratePresetGroup");
+    const ratePresetRoleContainer = document.getElementById("ratePresetRoleContainer");
+    const ratePresetRole = document.getElementById("ratePresetRole");
+
+    ratePresetGroup.addEventListener("change", () => {
+      const group = ratePresetGroup.value;
+      if (group === "custom") {
+        ratePresetRoleContainer.style.display = "none";
+        ratePresetRole.value = "";
+        return;
+      }
+      ratePresetRoleContainer.style.display = "block";
+      ratePresetRole.value = "";
+    });
+
+    ratePresetRole.addEventListener("change", () => {
+      const group = ratePresetGroup.value;
+      const role = ratePresetRole.value;
+      if (!group || group === "custom" || !role) return;
+      const preset = ratePresets[group];
+      if (!preset || !preset.rates[role]) return;
+      hourlyRateInput.value = preset.rates[role].toFixed(2);
     });
   </script>
 </body>
