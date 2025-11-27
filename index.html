@@ -1,291 +1,1331 @@
-/* 
-  Boilermaker 146 - CRA-style tax + deductions engine
-  ---------------------------------------------------
-  This file holds the CPP/CPP2/EI/Federal/Alberta tax logic.
-  It exposes a single function on window:
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Boilermaker 146 Paycheck Estimator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --navy: #002d5c;
+      --navy-soft: #0b2140;
+      --gold: #daa819;
+      --gold-soft: rgba(218, 168, 25, 0.12);
 
-      window.BoilerTaxEngine.calculateDeductionsForWeek(
-        taxableWeekly,
-        nonTaxableWeekly,
+      --bg: #f3f4f6;
+      --card-bg: #ffffff;
+      --border-subtle: #d1d5db;
+
+      --text-main: #111827;
+      --text-soft: #4b5563;
+      --danger: #b91c1c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+                   "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #e5e7eb 0, #f3f4f6 40%, #e5e7eb 100%);
+      color: var(--text-main);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 1.5rem 0.75rem 2.5rem;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 1220px;
+      background: linear-gradient(145deg, #ffffff, #f9fafb);
+      border-radius: 18px;
+      border: 1px solid var(--border-subtle);
+      box-shadow:
+        0 24px 60px rgba(15,23,42,0.18),
+        0 0 0 1px rgba(15,23,42,0.06);
+      padding: 1.3rem 2rem 1.4rem;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.25rem;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .logo-title {
+      display: flex;
+      align-items: center;
+      gap: 1.3rem;
+    }
+
+    .logo-wrap {
+      width: 110px;
+      height: 110px;
+      border-radius: 999px;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 0 3px #fef3c7, 0 14px 28px rgba(0,45,92,0.3);
+    }
+
+    .logo-wrap img {
+      max-width: 92px;
+      max-height: 92px;
+      border-radius: 999px;
+      display: block;
+    }
+
+    .title-block h1 {
+      font-size: 1.35rem;
+      letter-spacing: 0.03em;
+      margin: 0 0 0.25rem;
+      font-weight: 700;
+      color: var(--navy);
+    }
+
+    .title-pill {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.0);
+      background: var(--gold-soft);
+      color: var(--navy);
+      font-weight: 500;
+      margin-left: 0.25rem;
+    }
+
+    .subtitle {
+      font-size: 0.8rem;
+      color: var(--text-soft);
+      line-height: 1.4;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.25rem;
+      font-size: 0.72rem;
+      color: var(--text-soft);
+    }
+
+    .chip {
+      padding: 0.16rem 0.65rem;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      color: var(--navy);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 780px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .chip-row {
+        align-items: flex-start;
+      }
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.3fr);
+      gap: 1rem;
+      margin-top: 0.75rem;
+    }
+
+    @media (max-width: 840px) {
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 0.9rem 1rem 1rem;
+      border: 1px solid #e5e7eb;
+    }
+
+    .card h2 {
+      font-size: 0.95rem;
+      margin: 0 0 0.5rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: var(--navy-soft);
+    }
+
+    .card h2 span.step-pill {
+      font-size: 0.66rem;
+      padding: 0.08rem 0.4rem;
+      border-radius: 999px;
+      background: var(--gold-soft);
+      border: 1px solid rgba(218,168,25,0.7);
+      color: var(--navy-soft);
+      font-weight: 600;
+    }
+
+    .hint {
+      font-size: 0.76rem;
+      color: var(--text-soft);
+      margin-bottom: 0.4rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 0.6rem 1rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      margin-bottom: 0.25rem;
+      color: var(--text-soft);
+    }
+
+    input[type="number"], select {
+      width: 100%;
+      padding: 0.45rem 0.6rem;
+      border-radius: 9px;
+      border: 1px solid #d1d5db;
+      font-size: 0.9rem;
+      background: #ffffff;
+      color: var(--text-main);
+    }
+
+    input[type="number"]:focus, select:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 1px var(--gold-soft);
+    }
+
+    .small-label {
+      font-size: 0.75rem;
+      color: var(--text-soft);
+      margin-top: 0.25rem;
+      margin-bottom: 0.15rem;
+    }
+
+    .tiny-note {
+      font-size: 0.7rem;
+      color: #6b7280;
+      margin-top: 0.3rem;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.78rem;
+      color: var(--text-soft);
+      margin-top: 0.1rem;
+    }
+
+    input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      accent-color: var(--gold);
+    }
+
+    .table-wrapper {
+      border-radius: 11px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .table-inner {
+      overflow-x: auto;
+    }
+
+    .table-fade-right {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 22px;
+      height: 100%;
+      pointer-events: none;
+      background: linear-gradient(to left, rgba(243,244,246,1), rgba(243,244,246,0));
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      min-width: 650px;
+    }
+
+    th, td {
+      padding: 0.4rem 0.5rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    thead {
+      background: #e5edf5;
+    }
+
+    th {
+      text-align: left;
+      font-weight: 500;
+      color: var(--navy-soft);
+    }
+
+    td {
+      vertical-align: middle;
+    }
+
+    td input[type="number"], td select {
+      font-size: 0.78rem;
+      padding: 0.25rem 0.4rem;
+    }
+
+    td .checkbox-row {
+      margin-top: 0;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f9fafb;
+    }
+
+    .scroll-hint {
+      margin-top: 0.2rem;
+      font-size: 0.7rem;
+      color: #6b7280;
+      text-align: right;
+    }
+
+    .btn-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.7rem;
+      gap: 0.5rem;
+    }
+
+    .btn-group-right {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .btn-primary {
+      padding: 0.55rem 1.4rem;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--navy), var(--navy-soft));
+      color: #f9fafb;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      box-shadow: 0 10px 22px rgba(15,23,42,0.35);
+    }
+
+    .btn-primary:active {
+      transform: translateY(1px);
+      box-shadow: 0 5px 12px rgba(15,23,42,0.35);
+    }
+
+    .btn-secondary {
+      padding: 0.48rem 1.2rem;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      font-size: 0.85rem;
+      cursor: pointer;
+      background: #ffffff;
+      color: var(--navy-soft);
+    }
+
+    .btn-secondary:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 4px rgba(15,23,42,0.18);
+    }
+
+    .error {
+      color: var(--danger);
+      font-size: 0.78rem;
+      margin-top: 0.3rem;
+    }
+
+    .results-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 0.18rem 0;
+      font-size: 0.82rem;
+    }
+
+    .results-row strong {
+      font-weight: 600;
+    }
+
+    .section-label {
+      margin-top: 0.55rem;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-soft);
+    }
+
+    .results-row.highlight {
+      margin-top: 0.35rem;
+      padding-top: 0.4rem;
+      border-top: 1px dashed #e5e7eb;
+      font-size: 0.9rem;
+    }
+
+    details {
+      margin-top: 0.3rem;
+    }
+
+    details summary {
+      cursor: pointer;
+      list-style: none;
+      font-size: 0.8rem;
+      color: var(--text-soft);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    details summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .summary-pill {
+      font-size: 0.65rem;
+      padding: 0.08rem 0.4rem;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      background: #ffffff;
+    }
+
+    .summary-chevron {
+      font-size: 0.7rem;
+      opacity: 0.8;
+    }
+
+    details[open] .summary-chevron {
+      transform: rotate(90deg);
+    }
+
+    .tax-mode-group label {
+      display: block;
+      margin-bottom: 0.25rem;
+      font-size: 0.78rem;
+      color: var(--text-soft);
+    }
+
+    .footer-note {
+      margin-top: 0.6rem;
+      text-align: right;
+      font-size: 0.7rem;
+      color: #6b7280;
+    }
+
+    @media (max-width: 680px) {
+      body {
+        padding: 0.9rem 0.4rem 1.4rem;
+      }
+      .app-shell {
+        padding: 0.85rem 0.85rem 1rem;
+        border-radius: 0.9rem;
+      }
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .logo-wrap {
+        width: 82px;
+        height: 82px;
+        box-shadow: 0 0 0 2px #fef3c7, 0 10px 20px rgba(0,45,92,0.25);
+      }
+      .logo-wrap img {
+        max-width: 70px;
+        max-height: 70px;
+      }
+      .title-block h1 {
+        font-size: 1.1rem;
+      }
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .btn-row {
+        flex-direction: column-reverse;
+        align-items: stretch;
+      }
+      .btn-primary,
+      .btn-secondary {
+        width: 100%;
+        justify-content: center;
+      }
+      .chip-row {
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header>
+      <div class="logo-title">
+        <div class="logo-wrap">
+          <img src="boilermakers-logo.png" alt="Boilermakers logo">
+        </div>
+        <div class="title-block">
+          <h1>
+            Boilermaker 146 Paycheck Estimator
+            <span class="title-pill">Field · Night Shift · OT</span>
+          </h1>
+          <div class="subtitle">
+            Enter your hours for the week, mark night shifts, holidays and scheduled OT, choose the end-of-day break.<br>
+            The estimator calculates wages, night premium, 6% vacation, 4% stat, LOA, incentives and typical deductions.
+          </div>
+        </div>
+      </div>
+      <div class="chip-row">
+        <span class="chip">Night premium: straight time only (worked hrs)</span>
+        <span class="chip">Unscheduled 12h + 15-min break → +0.5h at 1×</span>
+        <span class="chip">Holidays are paid at 2×</span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <!-- LEFT: INPUTS -->
+      <form id="payForm" class="card">
+        <h2><span class="step-pill">1</span> Base info</h2>
+        <div class="grid">
+          <div>
+            <label for="hourlyRate">Hourly rate ($/hr)</label>
+            <input type="number" id="hourlyRate" step="0.01" min="0" required>
+            <div class="small-label">Select a rate table (optional):</div>
+            <select id="ratePresetGroup">
+              <option value="custom">Custom hourly rate</option>
+              <option value="fort">New construction &amp; Fort McMurray maintenance</option>
+              <option value="outside">Outside Fort McMurray maintenance</option>
+            </select>
+            <div id="ratePresetRoleContainer" style="margin-top:0.25rem; display:none;">
+              <div class="small-label">Classification:</div>
+              <select id="ratePresetRole">
+                <option value="">Choose classification…</option>
+                <option value="GF">GF</option>
+                <option value="Foreman">Foreman</option>
+                <option value="Journeyman">Journeyman</option>
+                <option value="App3">App3</option>
+                <option value="App2">App2</option>
+                <option value="App1">App1</option>
+              </select>
+            </div>
+            <div class="tiny-note">
+              Based on current Boilermakers 146 wage tables – confirm with your rep for changes.
+            </div>
+          </div>
+          <div>
+            <label for="nightPremiumRate">Night shift premium ($/hr)</label>
+            <input type="number" id="nightPremiumRate" step="0.01" min="0" value="4.50">
+          </div>
+        </div>
+
+        <h2 style="margin-top:0.85rem;"><span class="step-pill">2</span> Week schedule (Sun–Sat)</h2>
+        <p class="hint">
+          One row per day. If “Night shift” is checked, all <strong>worked</strong> hours that day earn the night premium
+          (the extra 0.5h break bonus does <strong>not</strong>). If “Holiday” is checked, all hours that day are paid at
+          <strong>double time (2×)</strong>.
+        </p>
+
+        <div class="table-wrapper">
+          <div class="table-inner">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 13%;">Day</th>
+                  <th style="width: 18%;">Hours</th>
+                  <th style="width: 18%;">Night shift</th>
+                  <th style="width: 18%;">Holiday</th>
+                  <th style="width: 18%;">Scheduled OT</th>
+                  <th style="width: 15%;">End break</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Sunday -->
+                <tr>
+                  <td>Sun</td>
+                  <td><input type="number" id="sunHours" step="0.1" min="0" value="0"></td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="sunNight">
+                      <label for="sunNight">Night</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="sunHoliday">
+                      <label for="sunHoliday">Holiday</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="sunScheduledOT">
+                      <label for="sunScheduledOT">Yes</label>
+                    </div>
+                  </td>
+                  <td>
+                    <select id="sunBreak">
+                      <option value="30">30 min</option>
+                      <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
+                    </select>
+                  </td>
+                </tr>
+                <!-- Monday -->
+                <tr>
+                  <td>Mon</td>
+                  <td><input type="number" id="monHours" step="0.1" min="0" value="0"></td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="monNight">
+                      <label for="monNight">Night</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="monHoliday">
+                      <label for="monHoliday">Holiday</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="monScheduledOT">
+                      <label for="monScheduledOT">Yes</label>
+                    </div>
+                  </td>
+                  <td>
+                    <select id="monBreak">
+                      <option value="30">30 min</option>
+                      <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
+                    </select>
+                  </td>
+                </tr>
+                <!-- Tuesday -->
+                <tr>
+                  <td>Tue</td>
+                  <td><input type="number" id="tueHours" step="0.1" min="0" value="0"></td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="tueNight">
+                      <label for="tueNight">Night</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="tueHoliday">
+                      <label for="tueHoliday">Holiday</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="tueScheduledOT">
+                      <label for="tueScheduledOT">Yes</label>
+                    </div>
+                  </td>
+                  <td>
+                    <select id="tueBreak">
+                      <option value="30">30 min</option>
+                      <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
+                    </select>
+                  </td>
+                </tr>
+                <!-- Wednesday -->
+                <tr>
+                  <td>Wed</td>
+                  <td><input type="number" id="wedHours" step="0.1" min="0" value="0"></td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="wedNight">
+                      <label for="wedNight">Night</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="wedHoliday">
+                      <label for="wedHoliday">Holiday</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="wedScheduledOT">
+                      <label for="wedScheduledOT">Yes</label>
+                    </div>
+                  </td>
+                  <td>
+                    <select id="wedBreak">
+                      <option value="30">30 min</option>
+                      <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
+                    </select>
+                  </td>
+                </tr>
+                <!-- Thursday -->
+                <tr>
+                  <td>Thu</td>
+                  <td><input type="number" id="thuHours" step="0.1" min="0" value="0"></td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="thuNight">
+                      <label for="thuNight">Night</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="thuHoliday">
+                      <label for="thuHoliday">Holiday</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="thuScheduledOT">
+                      <label for="thuScheduledOT">Yes</label>
+                    </div>
+                  </td>
+                  <td>
+                    <select id="thuBreak">
+                      <option value="30">30 min</option>
+                      <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
+                    </select>
+                  </td>
+                </tr>
+                <!-- Friday -->
+                <tr>
+                  <td>Fri</td>
+                  <td><input type="number" id="friHours" step="0.1" min="0" value="0"></td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="friNight">
+                      <label for="friNight">Night</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="friHoliday">
+                      <label for="friHoliday">Holiday</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="friScheduledOT">
+                      <label for="friScheduledOT">Yes</label>
+                    </div>
+                  </td>
+                  <td>
+                    <select id="friBreak">
+                      <option value="30">30 min</option>
+                      <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
+                    </select>
+                  </td>
+                </tr>
+                <!-- Saturday -->
+                <tr>
+                  <td>Sat</td>
+                  <td><input type="number" id="satHours" step="0.1" min="0" value="0"></td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="satNight">
+                      <label for="satNight">Night</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="satHoliday">
+                      <label for="satHoliday">Holiday</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="checkbox-row">
+                      <input type="checkbox" id="satScheduledOT">
+                      <label for="satScheduledOT">Yes</label>
+                    </div>
+                  </td>
+                  <td>
+                    <select id="satBreak">
+                      <option value="30">30 min</option>
+                      <option value="15">15 min (+0.5h if unsched & ≥12h)</option>
+                    </select>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-fade-right"></div>
+        </div>
+        <div class="scroll-hint">Swipe sideways to see all columns →</div>
+
+        <h2 style="margin-top:0.9rem;"><span class="step-pill">3</span> LOA</h2>
+        <div class="grid">
+          <div>
+            <label for="loaPerDay">LOA per day ($)</label>
+            <input type="number" id="loaPerDay" step="0.01" min="0" value="0">
+          </div>
+          <div>
+            <label for="loaDays">Number of LOA days</label>
+            <input type="number" id="loaDays" step="1" min="0" value="0">
+          </div>
+        </div>
+        <p class="hint">
+          LOA is treated as non-taxable here (no CPP/EI/tax on it).
+        </p>
+
+        <h2 style="margin-top:0.9rem;"><span class="step-pill">3b</span> Client incentive</h2>
+        <div class="grid">
+          <div>
+            <label for="incentiveAmount">Incentive amount ($)</label>
+            <input type="number" id="incentiveAmount" step="0.01" min="0" value="0">
+          </div>
+          <div style="display:flex; align-items:center; margin-top:1.55rem;">
+            <div class="checkbox-row">
+              <input type="checkbox" id="incentiveTaxable" checked>
+              <label for="incentiveTaxable">Taxable</label>
+            </div>
+          </div>
+        </div>
+        <p class="hint">
+          Incentive does not affect vacation/stat. If marked non-taxable, it is added on top like LOA.
+        </p>
+
+        <h2 style="margin-top:0.9rem;"><span class="step-pill">4</span> Advanced (deductions)</h2>
+        <details>
+          <summary>
+            <span class="summary-chevron">▶</span>
+            <span class="summary-pill">Open CRA tax settings</span>
+          </summary>
+          <p class="hint" style="margin-top:0.4rem;">
+            These settings control how CPP, EI, Federal and Alberta tax are estimated.
+            This tool uses 2025 CRA-style rules &amp; brackets for a weekly pay period.
+          </p>
+
+          <div class="tax-mode-group" style="margin-top:0.35rem;">
+            <label>
+              <input type="radio" name="taxMode" value="early-year" checked>
+              <strong>Mode A – Early year (simple)</strong> – assumes CPP/CPP2 and EI are still being deducted normally.
+            </label>
+            <label>
+              <input type="radio" name="taxMode" value="annualized">
+              <strong>Mode B – Smart estimate (annualized)</strong> – uses weekly income × 52 and caps CPP/CPP2/EI
+              based on yearly maximums.
+            </label>
+          </div>
+
+          <p class="hint" style="margin-top:0.5rem;">
+            Union working dues are assumed at <strong>3.75% of taxable earnings</strong> (wages + OT + night premium +
+            6% vacation + 4% stat + taxable incentives).
+          </p>
+          <p class="tiny-note">
+            This is an unofficial estimator – it will be close to actual payroll but not guaranteed exact CRA numbers.
+          </p>
+        </details>
+
+        <div class="btn-row">
+          <button class="btn-secondary" type="button" id="resetBtn">
+            Reset week
+          </button>
+          <div class="btn-group-right">
+            <button class="btn-primary" type="submit">
+              Calculate pay
+            </button>
+          </div>
+        </div>
+        <div id="error" class="error"></div>
+      </form>
+
+      <!-- RIGHT: RESULTS -->
+      <div class="card">
+        <h2><span class="step-pill">5</span> Results</h2>
+        <div id="resultsCard" style="display:none;">
+          <div id="summaryResults"></div>
+
+          <div class="section-label" style="margin-top:0.9rem;">
+            Day-by-day breakdown (Sun–Sat)
+          </div>
+          <div id="breakdownTableContainer"></div>
+        </div>
+
+        <div id="emptyState" class="hint">
+          Fill in your hours on the left, then hit <strong>Calculate pay</strong> to see your breakdown here.
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      Unofficial estimator – actual payroll may differ.
+    </div>
+  </div>
+
+  <!-- CRA tax engine in separate file -->
+  <script src="calculator.js"></script>
+
+  <!-- UI + Boilermaker logic -->
+  <script>
+    const VAC_RATE = 0.06;
+    const STAT_RATE = 0.04;
+
+    const ratePresets = {
+      fort: {
+        label: "New construction & Fort McMurray maintenance",
+        rates: {
+          GF: 64.90,
+          Foreman: 62.90,
+          Journeyman: 56.90,
+          App3: 51.21,
+          App2: 42.68,
+          App1: 34.14
+        }
+      },
+      outside: {
+        label: "Outside Fort McMurray maintenance",
+        rates: {
+          GF: 64.15,
+          Foreman: 62.15,
+          Journeyman: 56.15,
+          App3: 50.54,
+          App2: 42.11,
+          App1: 33.69
+        }
+      }
+    };
+
+    function safeNumber(value) {
+      const n = parseFloat(value);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function calculateDay(hours, hourlyRate, isWeekendOrHoliday) {
+      let regularH = 0, t1_5H = 0, t2H = 0;
+
+      if (isWeekendOrHoliday) {
+        t2H = hours;
+      } else {
+        const h = Math.max(hours, 0);
+        regularH = Math.min(h, 8);
+        t1_5H = Math.min(Math.max(h - 8, 0), 2);
+        t2H = Math.max(h - 10, 0);
+      }
+
+      return {
+        regularH,
+        t1_5H,
+        t2H,
+        regularPay: regularH * hourlyRate,
+        t1_5Pay: t1_5H * hourlyRate * 1.5,
+        t2Pay: t2H * hourlyRate * 2
+      };
+    }
+
+    document.getElementById("payForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const errorDiv = document.getElementById("error");
+      errorDiv.textContent = "";
+
+      const hourlyRate = safeNumber(document.getElementById("hourlyRate").value);
+      if (hourlyRate <= 0) {
+        errorDiv.textContent = "Please enter a valid hourly rate greater than 0.";
+        return;
+      }
+      const nightPremiumRate = safeNumber(document.getElementById("nightPremiumRate").value);
+
+      const loaPerDay = safeNumber(document.getElementById("loaPerDay").value);
+      const loaDays = safeNumber(document.getElementById("loaDays").value);
+
+      const incentiveAmount = safeNumber(document.getElementById("incentiveAmount").value);
+      const incentiveTaxable = document.getElementById("incentiveTaxable").checked;
+
+      const hours = {
+        Sun: safeNumber(document.getElementById("sunHours").value),
+        Mon: safeNumber(document.getElementById("monHours").value),
+        Tue: safeNumber(document.getElementById("tueHours").value),
+        Wed: safeNumber(document.getElementById("wedHours").value),
+        Thu: safeNumber(document.getElementById("thuHours").value),
+        Fri: safeNumber(document.getElementById("friHours").value),
+        Sat: safeNumber(document.getElementById("satHours").value)
+      };
+
+      const nightShift = {
+        Sun: document.getElementById("sunNight").checked,
+        Mon: document.getElementById("monNight").checked,
+        Tue: document.getElementById("tueNight").checked,
+        Wed: document.getElementById("wedNight").checked,
+        Thu: document.getElementById("thuNight").checked,
+        Fri: document.getElementById("friNight").checked,
+        Sat: document.getElementById("satNight").checked
+      };
+
+      const holiday = {
+        Sun: document.getElementById("sunHoliday").checked,
+        Mon: document.getElementById("monHoliday").checked,
+        Tue: document.getElementById("tueHoliday").checked,
+        Wed: document.getElementById("wedHoliday").checked,
+        Thu: document.getElementById("thuHoliday").checked,
+        Fri: document.getElementById("friHoliday").checked,
+        Sat: document.getElementById("satHoliday").checked
+      };
+
+      const scheduledOT = {
+        Sun: document.getElementById("sunScheduledOT").checked,
+        Mon: document.getElementById("monScheduledOT").checked,
+        Tue: document.getElementById("tueScheduledOT").checked,
+        Wed: document.getElementById("wedScheduledOT").checked,
+        Thu: document.getElementById("thuScheduledOT").checked,
+        Fri: document.getElementById("friScheduledOT").checked,
+        Sat: document.getElementById("satScheduledOT").checked
+      };
+
+      const breakType = {
+        Sun: document.getElementById("sunBreak").value,
+        Mon: document.getElementById("monBreak").value,
+        Tue: document.getElementById("tueBreak").value,
+        Wed: document.getElementById("wedBreak").value,
+        Thu: document.getElementById("thuBreak").value,
+        Fri: document.getElementById("friBreak").value,
+        Sat: document.getElementById("satBreak").value
+      };
+
+      let totalRegularPay = 0;
+      let totalT1_5Pay = 0;
+      let totalT2Pay = 0;
+      let totalRegularH = 0;
+      let totalT1_5H = 0;
+      let totalT2H = 0;
+      let totalNightPaidHours = 0;
+      let totalBreakBonusH = 0;
+
+      const breakdownRows = [];
+      const dayOrder = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const dayLabels = {
+        Sun: "Sunday",
+        Mon: "Monday",
+        Tue: "Tuesday",
+        Wed: "Wednesday",
+        Thu: "Thursday",
+        Fri: "Friday",
+        Sat: "Saturday"
+      };
+
+      for (const dayKey of dayOrder) {
+        const h = hours[dayKey];
+        if (h < 0) {
+          errorDiv.textContent = "Hours cannot be negative.";
+          return;
+        }
+
+        const isWeekend = (dayKey === "Sat" || dayKey === "Sun");
+        const isWeekendOrHoliday = isWeekend || holiday[dayKey];
+
+        const dayResult = calculateDay(h, hourlyRate, isWeekendOrHoliday);
+
+        let breakBonusH = 0;
+        if (!scheduledOT[dayKey] && h >= 12 && breakType[dayKey] === "15") {
+          breakBonusH = 0.5;
+        }
+        const breakBonusPay = breakBonusH * hourlyRate;
+
+        totalRegularPay += dayResult.regularPay + breakBonusPay;
+        totalT1_5Pay += dayResult.t1_5Pay;
+        totalT2Pay += dayResult.t2Pay;
+
+        totalRegularH += dayResult.regularH + breakBonusH;
+        totalT1_5H += dayResult.t1_5H;
+        totalT2H += dayResult.t2H;
+
+        totalBreakBonusH += breakBonusH;
+
+        let nightPaidH = 0;
+        if (nightShift[dayKey]) {
+          nightPaidH = h;
+        }
+        totalNightPaidHours += nightPaidH;
+
+        breakdownRows.push({
+          day: dayLabels[dayKey],
+          hours: h,
+          night: nightShift[dayKey],
+          holiday: holiday[dayKey],
+          nightPaidH,
+          regularH: dayResult.regularH + breakBonusH,
+          t1_5H: dayResult.t1_5H,
+          t2H: dayResult.t2H,
+          regularPay: dayResult.regularPay + breakBonusPay,
+          t1_5Pay: dayResult.t1_5Pay,
+          t2Pay: dayResult.t2Pay
+        });
+      }
+
+      const nightPremiumTotal = totalNightPaidHours * nightPremiumRate;
+
+      const baseForVacStat =
+        totalRegularPay + totalT1_5Pay + totalT2Pay + nightPremiumTotal;
+      const vacationPay = baseForVacStat * VAC_RATE;
+      const statPay = baseForVacStat * STAT_RATE;
+
+      const loaTotal = loaPerDay * loaDays;
+      const nonTaxIncentive = incentiveTaxable ? 0 : incentiveAmount;
+      const taxableIncentive = incentiveTaxable ? incentiveAmount : 0;
+
+      const taxableEarnings =
+        totalRegularPay + totalT1_5Pay + totalT2Pay +
+        nightPremiumTotal + vacationPay + statPay +
+        taxableIncentive;
+
+      const nonTaxableEarnings = loaTotal + nonTaxIncentive;
+      const totalGross = taxableEarnings + nonTaxableEarnings;
+
+      const taxModeRadio = document.querySelector('input[name="taxMode"]:checked');
+      const taxMode = taxModeRadio ? taxModeRadio.value : "early-year";
+
+      const deductions = window.BoilerTaxEngine.calculateDeductionsForWeek(
+        taxableEarnings,
+        nonTaxableEarnings,
         taxMode
-      )
-
-  - taxableWeekly   = earnings subject to tax/CPP/EI/dues
-  - nonTaxableWeekly = LOA + non-taxable incentive, etc.
-  - taxMode         = "early-year" (simple, default) or "annualized"
-*/
-
-/* =========================
-   1. CONSTANTS (approx 2025)
-   ========================= */
-
-// CPP Tier 1
-const CPP_RATE = 0.0595;
-const CPP_YMPE = 71300;
-const CPP_BASIC_EXEMPTION = 3500;
-const CPP_MAX_CONTRIB = 4034.10;
-
-// CPP Tier 2
-const CPP2_RATE = 0.04;
-const CPP2_YAMPE = 81200;
-const CPP2_MAX_CONTRIB = 396.00;
-
-// EI
-const EI_RATE = 0.0164;
-const EI_MAX_INSURABLE = 65700;
-const EI_MAX_CONTRIB = 1077.48;
-
-// Federal tax brackets (approx 2025)
-const FED_BRACKETS_2025 = [
-  { limit: 57375,    rate: 0.15  },
-  { limit: 114750,   rate: 0.205 },
-  { limit: 177882,   rate: 0.26  },
-  { limit: 253414,   rate: 0.29  },
-  { limit: Infinity, rate: 0.33  }
-];
-
-// Federal basic personal amount & credit rate (approx)
-const FED_BPA = 16129;
-const FED_CREDIT_RATE = 0.145;
-
-// Alberta tax brackets (approx 2025)
-const AB_BRACKETS_2025 = [
-  { limit: 60000,    rate: 0.08  },
-  { limit: 151234,   rate: 0.10  },
-  { limit: 181481,   rate: 0.12  },
-  { limit: 241974,   rate: 0.13  },
-  { limit: 362961,   rate: 0.14  },
-  { limit: Infinity, rate: 0.15  }
-];
-
-// Alberta basic personal amount & credit rate (approx)
-const AB_BPA = 22323;
-const AB_CREDIT_RATE = 0.08;
-
-// Union dues rate (on taxable earnings)
-const UNION_DUES_RATE = 0.0375;
-
-/* =========================
-   2. HELPERS
-   ========================= */
-
-function clamp(value, minVal, maxVal) {
-  return Math.max(minVal, Math.min(maxVal, value));
-}
-
-/**
- * Apply progressive tax brackets to an annual income.
- */
-function applyProgressiveTax(annualIncome, brackets) {
-  let remaining = annualIncome;
-  let lastLimit = 0;
-  let tax = 0;
-
-  for (const bracket of brackets) {
-    if (remaining <= 0) break;
-
-    const taxableAtThisRate = Math.min(remaining, bracket.limit - lastLimit);
-    if (taxableAtThisRate > 0) {
-      tax += taxableAtThisRate * bracket.rate;
-      remaining -= taxableAtThisRate;
-      lastLimit = bracket.limit;
-    }
-  }
-
-  return tax;
-}
-
-/* =========================
-   3. CPP / CPP2 / EI (weekly)
-   ========================= */
-
-/**
- * Compute CPP/CPP2/EI for one week of taxable income.
- * mode = "early-year" or "annualized"
- */
-function calculateCppEiForWeek(taxableWeekly, mode) {
-  const weeksPerYear = 52;
-  const annualEarnings = taxableWeekly * weeksPerYear;
-
-  let cppWeekly = 0;
-  let cpp2Weekly = 0;
-  let eiWeekly = 0;
-
-  if (mode === "annualized") {
-    // CPP Tier 1
-    const cppPensionableAnnual = clamp(
-      annualEarnings - CPP_BASIC_EXEMPTION,
-      0,
-      CPP_YMPE - CPP_BASIC_EXEMPTION
-    );
-    const cppAnnualRaw = cppPensionableAnnual * CPP_RATE;
-    const cppAnnual = Math.min(cppAnnualRaw, CPP_MAX_CONTRIB);
-    cppWeekly = cppAnnual / weeksPerYear;
-
-    // CPP Tier 2
-    if (annualEarnings > CPP_YMPE) {
-      const cpp2BaseAnnual = clamp(
-        annualEarnings - CPP_YMPE,
-        0,
-        CPP2_YAMPE - CPP_YMPE
       );
-      const cpp2AnnualRaw = cpp2BaseAnnual * CPP2_RATE;
-      const cpp2Annual = Math.min(cpp2AnnualRaw, CPP2_MAX_CONTRIB);
-      cpp2Weekly = cpp2Annual / weeksPerYear;
-    }
 
-    // EI
-    const eiInsurableAnnual = Math.min(annualEarnings, EI_MAX_INSURABLE);
-    const eiAnnualRaw = eiInsurableAnnual * EI_RATE;
-    const eiAnnual = Math.min(eiAnnualRaw, EI_MAX_CONTRIB);
-    eiWeekly = eiAnnual / weeksPerYear;
+      const cpp = deductions.cpp;
+      const cpp2 = deductions.cpp2;
+      const ei = deductions.ei;
+      const fedTax = deductions.federalTax;
+      const provTax = deductions.albertaTax;
+      const unionDues = deductions.unionDues;
+      const totalDeductions = deductions.totalDeductions;
+      const netPay = deductions.netPayTotal;
 
-  } else {
-    // "early-year" – simpler weekly approximation
+      const summaryDiv = document.getElementById("summaryResults");
+      summaryDiv.innerHTML = `
+        <div class="section-label">Hours</div>
+        <div class="results-row">
+          <span>Total regular hours (1× incl. break bonus)</span>
+          <strong>${totalRegularH.toFixed(2)} h</strong>
+        </div>
+        <div class="results-row">
+          <span>Total OT hours (1.5×)</span>
+          <strong>${totalT1_5H.toFixed(2)} h</strong>
+        </div>
+        <div class="results-row">
+          <span>Total double-time hours (2× incl. weekends/holidays)</span>
+          <strong>${totalT2H.toFixed(2)} h</strong>
+        </div>
+        <div class="results-row">
+          <span>Total night paid hours</span>
+          <strong>${totalNightPaidHours.toFixed(2)} h</strong>
+        </div>
 
-    // CPP Tier 1
-    const cppEarningsWeekly = Math.max(
-      0,
-      taxableWeekly - (CPP_BASIC_EXEMPTION / weeksPerYear)
-    );
-    const cppWeeklyRaw = cppEarningsWeekly * CPP_RATE;
-    const cppWeeklyMax = CPP_MAX_CONTRIB / weeksPerYear;
-    cppWeekly = Math.min(cppWeeklyRaw, cppWeeklyMax);
+        <div class="section-label">Earnings</div>
+        <div class="results-row">
+          <span>Regular pay (1× incl. break bonus)</span>
+          <strong>$${totalRegularPay.toFixed(2)}</strong>
+        </div>
+        <div class="results-row">
+          <span>OT pay (1.5×)</span>
+          <strong>$${totalT1_5Pay.toFixed(2)}</strong>
+        </div>
+        <div class="results-row">
+          <span>Double-time pay (2×)</span>
+          <strong>$${totalT2Pay.toFixed(2)}</strong>
+        </div>
+        <div class="results-row">
+          <span>Night shift premium</span>
+          <strong>$${nightPremiumTotal.toFixed(2)}</strong>
+        </div>
+        <div class="results-row">
+          <span>Vacation (6%)</span>
+          <strong>$${vacationPay.toFixed(2)}</strong>
+        </div>
+        <div class="results-row">
+          <span>Statutory holiday (4%)</span>
+          <strong>$${statPay.toFixed(2)}</strong>
+        </div>
+        <div class="results-row">
+          <span>LOA total (non-taxable)</span>
+          <strong>$${loaTotal.toFixed(2)}</strong>
+        </div>
+        <div class="results-row">
+          <span>Incentive (taxable)</span>
+          <strong>$${taxableIncentive.toFixed(2)}</strong>
+        </div>
+        <div class="results-row">
+          <span>Incentive (non-taxable)</span>
+          <strong>$${nonTaxIncentive.toFixed(2)}</strong>
+        </div>
 
-    // CPP Tier 2 – approximate based on annualized earnings
-    if (annualEarnings > CPP_YMPE) {
-      const excessEarningsAnnual = clamp(
-        annualEarnings - CPP_YMPE,
-        0,
-        CPP2_YAMPE - CPP_YMPE
-      );
-      const cpp2Annual = Math.min(excessEarningsAnnual * CPP2_RATE, CPP2_MAX_CONTRIB);
-      cpp2Weekly = cpp2Annual / weeksPerYear;
-    }
+        <div class="results-row highlight">
+          <span>Gross pay (incl. LOA & non-tax incentive)</span>
+          <strong>$${totalGross.toFixed(2)}</strong>
+        </div>
 
-    // EI
-    const eiEarningsWeekly = Math.min(
-      taxableWeekly,
-      EI_MAX_INSURABLE / weeksPerYear
-    );
-    const eiWeeklyRaw = eiEarningsWeekly * EI_RATE;
-    const eiWeeklyMax = EI_MAX_CONTRIB / weeksPerYear;
-    eiWeekly = Math.min(eiWeeklyRaw, eiWeeklyMax);
-  }
+        <div class="section-label">Deductions</div>
+        <div class="results-row">
+          <span>CPP (Tier 1)</span>
+          <strong>$${cpp.toFixed(2)}</strong>
+        </div>
+        <div class="results-row">
+          <span>CPP2 (Tier 2)</span>
+          <strong>$${cpp2.toFixed(2)}</strong>
+        </div>
+        <div class="results-row">
+          <span>EI</span>
+          <strong>$${ei.toFixed(2)}</strong>
+        </div>
+        <div class="results-row">
+          <span>Federal income tax</span>
+          <strong>$${fedTax.toFixed(2)}</strong>
+        </div>
+        <div class="results-row">
+          <span>Alberta income tax</span>
+          <strong>$${provTax.toFixed(2)}</strong>
+        </div>
+        <div class="results-row">
+          <span>Union working dues (3.75% of taxable)</span>
+          <strong>$${unionDues.toFixed(2)}</strong>
+        </div>
+        <div class="results-row highlight">
+          <span>Total deductions</span>
+          <strong>$${totalDeductions.toFixed(2)}</strong>
+        </div>
 
-  return { cpp: cppWeekly, cpp2: cpp2Weekly, ei: eiWeekly };
-}
+        <div class="results-row highlight">
+          <span><strong>Estimated net pay</strong></span>
+          <strong>$${netPay.toFixed(2)}</strong>
+        </div>
+      `;
 
-/* =========================
-   4. INCOME TAX (Federal + Alberta)
-   ========================= */
+      const breakdownContainer = document.getElementById("breakdownTableContainer");
+      let tableHtml = `
+        <div class="table-wrapper" style="margin-top:0.3rem;">
+          <div class="table-inner">
+            <table style="min-width: 900px;">
+              <thead>
+                <tr>
+                  <th>Day</th>
+                  <th>Total hrs</th>
+                  <th>Night?</th>
+                  <th>Holiday?</th>
+                  <th>Night paid hrs</th>
+                  <th>1× hrs</th>
+                  <th>1.5× hrs</th>
+                  <th>2× hrs</th>
+                  <th>1× pay</th>
+                  <th>1.5× pay</th>
+                  <th>2× pay</th>
+                </tr>
+              </thead>
+              <tbody>
+      `;
+      breakdownRows.forEach(row => {
+        const nightText = row.night ? "Yes" : "No";
+        const holText = row.holiday ? "Yes" : "No";
+        tableHtml += `
+          <tr>
+            <td>${row.day}</td>
+            <td>${row.hours.toFixed(2)}</td>
+            <td>${nightText}</td>
+            <td>${holText}</td>
+            <td>${row.nightPaidH.toFixed(2)}</td>
+            <td>${row.regularH.toFixed(2)}</td>
+            <td>${row.t1_5H.toFixed(2)}</td>
+            <td>${row.t2H.toFixed(2)}</td>
+            <td>$${row.regularPay.toFixed(2)}</td>
+            <td>$${row.t1_5Pay.toFixed(2)}</td>
+            <td>$${row.t2Pay.toFixed(2)}</td>
+          </tr>
+        `;
+      });
+      tableHtml += `
+              </tbody>
+            </table>
+          </div>
+          <div class="table-fade-right"></div>
+        </div>
+        <div class="scroll-hint">Swipe sideways to see full breakdown →</div>
+      `;
+      breakdownContainer.innerHTML = tableHtml;
 
-function calculateAnnualFederalTaxGross(annualTaxable) {
-  return applyProgressiveTax(annualTaxable, FED_BRACKETS_2025);
-}
+      document.getElementById("resultsCard").style.display = "block";
+      document.getElementById("emptyState").style.display = "none";
+    });
 
-function calculateAnnualAlbertaTaxGross(annualTaxable) {
-  return applyProgressiveTax(annualTaxable, AB_BRACKETS_2025);
-}
+    document.getElementById("resetBtn").addEventListener("click", function () {
+      const form = document.getElementById("payForm");
+      form.reset();
 
-/**
- * Compute weekly federal + Alberta income tax from weekly taxable income
- * and CPP/EI amounts (for credits).
- */
-function calculateIncomeTaxForWeek(taxableWeekly, cppWeekly, eiWeekly) {
-  const weeksPerYear = 52;
-  const annualTaxable = taxableWeekly * weeksPerYear;
+      document.getElementById("ratePresetGroup").value = "custom";
+      const roleContainer = document.getElementById("ratePresetRoleContainer");
+      const roleSelect = document.getElementById("ratePresetRole");
+      roleSelect.value = "";
+      roleContainer.style.display = "none";
 
-  const cppAnnual = cppWeekly * weeksPerYear;
-  const eiAnnual = eiWeekly * weeksPerYear;
+      document.getElementById("summaryResults").innerHTML = "";
+      document.getElementById("breakdownTableContainer").innerHTML = "";
+      document.getElementById("error").textContent = "";
 
-  // Federal
-  const federalGrossAnnual = calculateAnnualFederalTaxGross(annualTaxable);
-  const federalCreditAnnual =
-    FED_BPA * FED_CREDIT_RATE +
-    (cppAnnual + eiAnnual) * FED_CREDIT_RATE;
-  const federalNetAnnual = Math.max(0, federalGrossAnnual - federalCreditAnnual);
-  const federalWeekly = federalNetAnnual / weeksPerYear;
+      document.getElementById("resultsCard").style.display = "none";
+      document.getElementById("emptyState").style.display = "block";
+    });
 
-  // Alberta
-  const abGrossAnnual = calculateAnnualAlbertaTaxGross(annualTaxable);
-  const abCreditAnnual =
-    AB_BPA * AB_CREDIT_RATE +
-    (cppAnnual + eiAnnual) * AB_CREDIT_RATE;
-  const abNetAnnual = Math.max(0, abGrossAnnual - abCreditAnnual);
-  const abWeekly = abNetAnnual / weeksPerYear;
+    const hourInputIds = [
+      "sunHours","monHours","tueHours",
+      "wedHours","thuHours","friHours","satHours"
+    ];
+    hourInputIds.forEach(id => {
+      const input = document.getElementById(id);
+      if (!input) return;
 
-  return {
-    federalWeekly,
-    abWeekly
-  };
-}
+      input.addEventListener("focus", () => {
+        const v = input.value.trim();
+        if (v === "0" || v === "0.0" || v === "0.00") {
+          input.value = "";
+        }
+      });
 
-/* =========================
-   5. MAIN PUBLIC FUNCTION
-   ========================= */
+      input.addEventListener("blur", () => {
+        if (input.value.trim() === "") {
+          input.value = "0";
+        }
+      });
+    });
 
-/**
- * Calculate full deduction breakdown for ONE week.
- *
- * Inputs:
- *   taxableWeekly     = earnings subject to tax/CPP/EI/dues
- *   nonTaxableWeekly  = LOA + non-taxable incentive, etc.
- *   taxMode           = "early-year" (default) or "annualized"
- *
- * Returns:
- *   {
- *     cpp,
- *     cpp2,
- *     ei,
- *     federalTax,
- *     albertaTax,
- *     unionDues,
- *     totalDeductions,
- *     netTaxableOnly,
- *     netPayTotal
- *   }
- */
-function calculateDeductionsForWeek(taxableWeekly, nonTaxableWeekly, taxMode) {
-  const mode = (taxMode === "annualized") ? "annualized" : "early-year";
+    const hourlyRateInput = document.getElementById("hourlyRate");
+    const ratePresetGroup = document.getElementById("ratePresetGroup");
+    const ratePresetRoleContainer = document.getElementById("ratePresetRoleContainer");
+    const ratePresetRole = document.getElementById("ratePresetRole");
 
-  // 1) CPP / CPP2 / EI
-  const { cpp, cpp2, ei } = calculateCppEiForWeek(taxableWeekly, mode);
+    ratePresetGroup.addEventListener("change", () => {
+      const group = ratePresetGroup.value;
+      if (group === "custom") {
+        ratePresetRoleContainer.style.display = "none";
+        ratePresetRole.value = "";
+        return;
+      }
+      ratePresetRoleContainer.style.display = "block";
+      ratePresetRole.value = "";
+    });
 
-  // 2) Federal + Alberta tax
-  const { federalWeekly, abWeekly } = calculateIncomeTaxForWeek(
-    taxableWeekly,
-    cpp,
-    ei
-  );
-
-  // 3) Union dues
-  const unionDues = taxableWeekly * UNION_DUES_RATE;
-
-  // 4) Total deductions
-  const totalDeductions = cpp + cpp2 + ei + federalWeekly + abWeekly + unionDues;
-
-  // 5) Net pay
-  const netTaxableOnly = taxableWeekly - totalDeductions;
-  const netPayTotal = netTaxableOnly + (nonTaxableWeekly || 0);
-
-  return {
-    cpp,
-    cpp2,
-    ei,
-    federalTax: federalWeekly,
-    albertaTax: abWeekly,
-    unionDues,
-    totalDeductions,
-    netTaxableOnly,
-    netPayTotal
-  };
-}
-
-/* =========================
-   6. EXPORT TO WINDOW
-   ========================= */
-
-window.BoilerTaxEngine = {
-  calculateDeductionsForWeek
-};
+    ratePresetRole.addEventListener("change", () => {
+      const group = ratePresetGroup.value;
+      const role = ratePresetRole.value;
+      if (!group || group === "custom" || !role) return;
+      const preset = ratePresets[group];
+      if (!preset || !preset.rates[role]) return;
+      hourlyRateInput.value = preset.rates[role].toFixed(2);
+    });
+  </script>
+</body>
+</html>
